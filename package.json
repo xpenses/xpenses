@@ -186,5 +186,6 @@
       "@typescript-eslint/no-empty-interface": 0,
       "@typescript-eslint/no-var-requires": 0
     }
-  }
+  },
+  "resolutions": { "**/**/lodash": "^4.17.12" }
 }
