@@ -1,9 +1,10 @@
-import * as React from "react"
-import { View, Image, ViewStyle, TextStyle, ImageStyle, SafeAreaView } from "react-native"
-import { NavigationScreenProps } from "react-navigation"
+import React, { useEffect, useMemo, useState } from "react"
+import { View, StyleSheet, ViewStyle, TextStyle, ImageStyle, SafeAreaView } from "react-native"
+import { NavigationScreenProps, FlatList } from "react-navigation"
 import { Button, Header, Screen, Text, Wallpaper } from "../../components"
+import { firestore, getUserApp, firebase } from '../../services/firebase';
 import { color, spacing } from "../../theme"
-const bowserLogo = require("./bowser.png")
+
 
 const FULL: ViewStyle = { flex: 1 }
 const CONTAINER: ViewStyle = {
@@ -74,12 +75,55 @@ const FOOTER_CONTENT: ViewStyle = {
   paddingHorizontal: spacing[4],
 }
 
-export interface WelcomeScreenProps extends NavigationScreenProps<{}> {}
+export interface PaymentListScreenProps extends NavigationScreenProps<{}> { }
 
-export const WelcomeScreen: React.FunctionComponent<WelcomeScreenProps> = props => {
-  const nextScreen = React.useMemo(() => () => props.navigation.navigate("payments"), [
+interface Expense {
+  type: 'offline' | 'online',
+  amount: number,
+  from: string
+}
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: 22
+  },
+  item: {
+    padding: 10,
+    fontSize: 18,
+    height: 44,
+  },
+})
+
+export const PaymentListScreen: React.FunctionComponent<PaymentListScreenProps> = props => {
+
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+
+  const nextScreen = useMemo(() => () => props.navigation.navigate("payments"), [
     props.navigation,
   ])
+
+
+  useEffect(() => {
+    (async () => {
+      console.log('firebase.apps',firebase.apps);
+      const userApp = await getUserApp();
+      console.log(userApp);
+      const querySnapshot = await userApp.firestore()
+        .collection('expenses')
+        .get();
+      console.log('Total userapp', querySnapshot.size);
+      console.log('userapp Documents', querySnapshot.docs[0].data());
+
+      const expenses = [...querySnapshot.docs].map((doc) => {
+        let { type, amount, from } = doc.data();
+        return { type, amount, from }
+      });
+
+      setExpenses(expenses);
+    })()
+  }, [])
 
   return (
     <View testID="WelcomeScreen" style={FULL}>
@@ -87,20 +131,15 @@ export const WelcomeScreen: React.FunctionComponent<WelcomeScreenProps> = props 
       <Screen style={CONTAINER} preset="scroll" backgroundColor={color.transparent}>
         <Header headerTx="welcomeScreen.poweredBy" style={HEADER} titleStyle={HEADER_TITLE} />
         <Text style={TITLE_WRAPPER}>
-          <Text style={TITLE} text="Your new app, " />
-          <Text style={ALMOST} text="almost" />
-          <Text style={TITLE} text="!" />
+          <Text style={TITLE} text="List of payments" />
         </Text>
-        <Text style={TITLE} preset="header" tx="welcomeScreen.readyForLaunch" />
-        <Image source={bowserLogo} style={BOWSER} />
-        <Text style={CONTENT}>
-          This probably isn't what your app is going to look like. Unless your designer handed you
-          this screen and, in that case, congrats! You're ready to ship.
-        </Text>
-        <Text style={CONTENT}>
-          For everyone else, this is where you'll see a live preview of your fully functioning app
-          using Ignite.
-        </Text>
+        <SafeAreaView style={{ flex: 1 }}>
+
+          <FlatList
+            data={expenses}
+            renderItem={({ item }) => <Text style={styles.item}>{item.type} | {item.amount} | {item.from}</Text>}
+          />
+        </SafeAreaView>
       </Screen>
       <SafeAreaView style={FOOTER}>
         <View style={FOOTER_CONTENT}>
