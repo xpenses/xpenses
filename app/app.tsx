@@ -7,7 +7,8 @@ import React, { useState, useEffect } from "react"
 import { AppRegistry, YellowBox } from "react-native"
 import { StatefulNavigator, BackButtonHandler, exitRoutes } from "./navigation"
 import { RootStore, RootStoreProvider, setupRootStore } from "./models/root-store"
-
+import { FirebaseAuthTypes } from '@react-native-firebase/auth'
+import { auth } from './services/firebase';
 import { contains } from "ramda"
 import { enableScreens } from "react-native-screens"
 
@@ -51,9 +52,28 @@ const canExit = (routeName: string) => contains(routeName, exitRoutes)
  */
 export const App: React.FunctionComponent<{}> = () => {
   const [rootStore, setRootStore] = useState<RootStore | undefined>(undefined) // prettier-ignore
+  const [initilizing, setInitilizing] = useState<Boolean>(true);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+
+  const onAuthStateChanged = (user) => {
+    setUser(user);
+    if (initilizing) setInitilizing(false);
+  }
+
+  useEffect(() => {
+    const subscriber = auth.onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  // temp anonymous login 
+  useEffect(() => {
+    auth.signInAnonymously();
+  }, []);
+
   useEffect(() => {
     setupRootStore().then(setRootStore)
-  }, [])
+  }, []);
+
 
   // Before we show the app, we have to wait for our state to be ready.
   // In the meantime, don't render anything. This will be the background
@@ -66,6 +86,9 @@ export const App: React.FunctionComponent<{}> = () => {
   if (!rootStore) {
     return null
   }
+
+  // still initializing
+  if (initilizing) return null;
 
   // otherwise, we're ready to render the app
   return (

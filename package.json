@@ -29,6 +29,8 @@
   },
   "dependencies": {
     "@react-native-community/async-storage": "^1.5.1",
+    "@react-native-firebase/app": "^6.1.0",
+    "@react-native-firebase/auth": "^6.1.0",
     "apisauce": "1.0.3",
     "i18n-js": "^3.0.11",
     "lodash.throttle": "4.1.1",
@@ -187,5 +189,7 @@
       "@typescript-eslint/no-var-requires": 0
     }
   },
-  "resolutions": { "**/**/lodash": "^4.17.12" }
+  "resolutions": {
+    "**/**/lodash": "^4.17.12"
+  }
 }
